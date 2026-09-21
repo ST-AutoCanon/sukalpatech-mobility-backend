@@ -11,4 +11,4 @@ router.post("/bookings", createScannerBooking);
 
 router.get("/availability", getScannerAvailability);
 
-module.exports = router;
+module.exports = router;        

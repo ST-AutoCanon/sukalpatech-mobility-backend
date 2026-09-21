@@ -42,20 +42,27 @@ const scannerBookingSchema = new mongoose.Schema(
             required: true,
         },
 
-        date: {
-            type: String,
-            required: true,
-        },
+        // --------------------------------------------------
+        // Multiple requested dates and times
+        // --------------------------------------------------
+        bookings: [
+            {
+                date: {
+                    type: String,
+                    required: true,
+                },
 
-        startTime: {
-    type: String,
-    required: true,
-},
+                startTime: {
+                    type: String,
+                    required: true,
+                },
 
-endTime: {
-    type: String,
-    required: true,
-},
+                endTime: {
+                    type: String,
+                    required: true,
+                },
+            },
+        ],
 
         purpose: {
             type: String,
