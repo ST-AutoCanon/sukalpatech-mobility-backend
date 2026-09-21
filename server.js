@@ -1,5 +1,5 @@
-const express = require("express");
 const cors = require("cors");
+const express = require("express");
 const dotenv = require("dotenv");
 
 const connectDB = require("./config/db");
@@ -10,13 +10,8 @@ const app = express();
 
 connectDB();
 
-app.use(
-    cors({
-        origin: process.env.FRONTEND_URL,
-        credentials: true,
-    })
-);
-
+// CORS
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
