@@ -23,6 +23,7 @@ const sendScannerApprovalEmail = async ({
     bookings,
     adminComment
 }) => {
+    
     const safeBookings = Array.isArray(bookings) ? bookings : [];
 
     const bookingRows = safeBookings

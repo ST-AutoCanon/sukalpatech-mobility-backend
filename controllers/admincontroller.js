@@ -470,6 +470,7 @@ const approveScannerBooking = async (req, res) => {
                 to: booking.email,
                 name: booking.fullName,
                 bookings: booking.bookings,
+                adminComment: booking.adminComment,
             });
 
             console.log(
@@ -532,43 +533,55 @@ const rejectScannerBooking = async (req, res) => {
             });
         }
 
-        // Update booking
+        // --------------------------------------------------
+        // UPDATE BOOKING
+        // --------------------------------------------------
+
         booking.status = "rejected";
+
         booking.adminComment = adminComment || "";
-        booking.reviewedBy = req.admin.email;
+
+        booking.reviewedBy =
+            req.admin?.email ||
+            req.user?.email ||
+            "Scanner Admin";
+
         booking.reviewedAt = new Date();
 
         await booking.save();
 
-        /*
-         * --------------------------------------------------
-         * SEND REJECTION EMAIL TO APPLICANT
-         * --------------------------------------------------
-         */
+        // --------------------------------------------------
+        // SEND REJECTION EMAIL TO APPLICANT
+        // --------------------------------------------------
 
         try {
-    const {
-        sendScannerApprovalEmail,
-    } = require("../Services/scannerEmailService");
+            const {
+                sendScannerRejectionEmail,
+            } = require("../Services/scannerEmailService");
 
-    await sendScannerApprovalEmail({
-        to: booking.email,
-        name: booking.fullName,
-        bookings: booking.bookings,
-    });
+            await sendScannerRejectionEmail({
+                to: booking.email,
+                name: booking.fullName,
+                bookings: booking.bookings,
+                adminComment: booking.adminComment,
+            });
 
-    console.log(
-        `Scanner approval email sent to ${booking.email}`
-    );
+            console.log(
+                `Scanner rejection email sent to ${booking.email}`
+            );
 
-} catch (emailError) {
-    console.error(
-        "Scanner approval email error:",
-        emailError
-    );
+        } catch (emailError) {
+            console.error(
+                "Scanner rejection email error:",
+                emailError
+            );
 
-    // Booking remains approved even if email fails.
-}
+            // Booking remains rejected even if email fails.
+        }
+
+        // --------------------------------------------------
+        // RESPONSE
+        // --------------------------------------------------
 
         return res.status(200).json({
             success: true,
