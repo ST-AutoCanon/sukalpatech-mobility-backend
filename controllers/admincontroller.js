@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const ScannerAdmin = require("../models/adminmodel");
+const BlockedSlot = require("../models/Blockedslote");
 
 const timeToMinutes = (time) => {
     if (!time) return NaN;
@@ -602,10 +603,228 @@ const rejectScannerBooking = async (req, res) => {
     }
 };
 
+
+// ============================================================
+// GET BLOCKED SLOTS
+// ============================================================
+
+const getBlockedSlots = async (req, res) => {
+    try {
+        const blockedSlots = await BlockedSlot.find({})
+            .sort({
+                date: 1,
+                startTime: 1,
+            });
+
+        return res.status(200).json({
+            success: true,
+            count: blockedSlots.length,
+            data: blockedSlots,
+        });
+    } catch (error) {
+        console.error("Get blocked slots error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch blocked slots.",
+        });
+    }
+};
+
+
+// ============================================================
+// BLOCK SCANNER SLOT
+// ============================================================
+
+const createBlockedSlot = async (req, res) => {
+  try {
+    const {
+      dates,
+      startTime = "",
+      endTime = "",
+      reason,
+      note = "",
+    } = req.body;
+
+    if (!Array.isArray(dates) || dates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select at least one date.",
+      });
+    }
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: "Reason is required.",
+      });
+    }
+
+    if (startTime && !endTime) {
+      return res.status(400).json({
+        success: false,
+        message: "End time is required when start time is selected.",
+      });
+    }
+
+    if (!startTime && endTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Start time is required when end time is selected.",
+      });
+    }
+
+    if (startTime && endTime) {
+      const convertTimeToMinutes = (time) => {
+        if (!time) return -1;
+
+        const [timePart, modifier] = time.split(" ");
+
+        if (!timePart || !modifier) return -1;
+
+        let [hours, minutes] = timePart.split(":").map(Number);
+
+        if (
+          Number.isNaN(hours) ||
+          Number.isNaN(minutes)
+        ) {
+          return -1;
+        }
+
+        if (
+          modifier.toUpperCase() === "PM" &&
+          hours !== 12
+        ) {
+          hours += 12;
+        }
+
+        if (
+          modifier.toUpperCase() === "AM" &&
+          hours === 12
+        ) {
+          hours = 0;
+        }
+
+        return hours * 60 + minutes;
+      };
+
+      if (
+        convertTimeToMinutes(endTime) <=
+        convertTimeToMinutes(startTime)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "End time must be later than start time.",
+        });
+      }
+    }
+
+    // Remove duplicate dates
+    const uniqueDates = [
+      ...new Set(
+        dates
+          .map((date) => String(date).trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    // Check which dates are already blocked
+    const existingSlots = await BlockedSlot.find({
+      date: { $in: uniqueDates },
+      startTime,
+      endTime,
+    });
+
+    const existingDates = new Set(
+      existingSlots.map((slot) => slot.date)
+    );
+
+    const datesToCreate = uniqueDates.filter(
+      (date) => !existingDates.has(date)
+    );
+
+    if (datesToCreate.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "All selected dates are already blocked for this time period.",
+      });
+    }
+
+    const blockedDocuments = datesToCreate.map((date) => ({
+      date,
+      startTime,
+      endTime,
+      reason,
+      note: note.trim(),
+      blockedBy: "Scanner Admin",
+    }));
+
+    const createdSlots = await BlockedSlot.insertMany(
+      blockedDocuments
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: `${createdSlots.length} date${
+        createdSlots.length > 1 ? "s" : ""
+      } blocked successfully.`,
+      data: createdSlots,
+    });
+  } catch (error) {
+    console.error("Create blocked slots error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to block dates.",
+      error: error.message,
+    });
+  }
+};
+
+
+// ============================================================
+// DELETE BLOCKED SLOT
+// ============================================================
+
+const deleteBlockedSlot = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const blockedSlot =
+            await BlockedSlot.findByIdAndDelete(id);
+
+        if (!blockedSlot) {
+            return res.status(404).json({
+                success: false,
+                message: "Blocked slot not found.",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Scanner slot unblocked successfully.",
+            data: blockedSlot,
+        });
+
+    } catch (error) {
+        console.error("Delete blocked slot error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to unblock scanner slot.",
+        });
+    }
+};
+
 module.exports = {
     adminLogin,
     getScannerBookings,
     getScannerBookingById,
     approveScannerBooking,
     rejectScannerBooking,
+
+    getBlockedSlots,
+    createBlockedSlot,
+    deleteBlockedSlot,
 };
