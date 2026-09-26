@@ -8,6 +8,10 @@ const {
     getScannerBookingById,
     approveScannerBooking,
     rejectScannerBooking,
+
+    getBlockedSlots,
+    createBlockedSlot,
+    deleteBlockedSlot,
 } = require("../controllers/admincontroller");
 
 const adminAuth = require("../middleware/adminauth");
@@ -38,6 +42,28 @@ router.put(
     "/bookings/:id/reject",
     adminAuth,
     rejectScannerBooking
+);
+
+// ============================================================
+// BLOCKED SCANNER SLOT APIs
+// ============================================================
+
+router.get(
+    "/blocked-slots",
+    adminAuth,
+    getBlockedSlots
+);
+
+router.post(
+    "/blocked-slots",
+    adminAuth,
+    createBlockedSlot
+);
+
+router.delete(
+    "/blocked-slots/:id",
+    adminAuth,
+    deleteBlockedSlot
 );
 
 module.exports = router;

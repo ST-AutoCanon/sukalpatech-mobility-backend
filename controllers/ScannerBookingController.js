@@ -1,5 +1,9 @@
 const ScannerBooking = require("../models/ScannerBooking");
 
+const {
+    sendNewScannerRequestEmail,
+} = require("../Services/scannerEmailService");
+
 const timeToMinutes = (time) => {
     if (!time) return NaN;
 
@@ -211,6 +215,19 @@ const createScannerBooking = async (req, res) => {
                 concerns,
                 status: "pending",
             });
+
+            await sendNewScannerRequestEmail({
+    bookingId,
+    fullName,
+    email,
+    countryCode,
+    mobile,
+    department,
+    contactMethod,
+    bookings,
+    purpose,
+    concerns,
+});
 
         return res.status(201).json({
             success: true,
