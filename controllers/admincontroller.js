@@ -743,13 +743,21 @@ const createBlockedSlot = async (req, res) => {
       (date) => !existingDates.has(date)
     );
 
-    if (datesToCreate.length === 0) {
-      return res.status(409).json({
-        success: false,
-        message:
-          "All selected dates are already blocked for this time period.",
-      });
-    }
+   if (datesToCreate.length === 0) {
+  const blockedDates = [...existingDates];
+
+  if (blockedDates.length === 1) {
+    return res.status(409).json({
+      success: false,
+      message: `${blockedDates[0]} is already blocked`,
+    });
+  }
+
+  return res.status(409).json({
+    success: false,
+    message: `${blockedDates.join(", ")} are already blocked`,
+  });
+}
 
     const blockedDocuments = datesToCreate.map((date) => ({
       date,
