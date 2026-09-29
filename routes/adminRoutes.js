@@ -11,6 +11,7 @@ const {
 
     getBlockedSlots,
     createBlockedSlot,
+    updateBlockedSlot,
     deleteBlockedSlot,
 } = require("../controllers/admincontroller");
 
@@ -58,6 +59,12 @@ router.post(
     "/blocked-slots",
     adminAuth,
     createBlockedSlot
+);
+
+router.put(
+    "/blocked-slots/:id",
+    adminAuth,
+    updateBlockedSlot
 );
 
 router.delete(

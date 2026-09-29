@@ -790,6 +790,156 @@ const createBlockedSlot = async (req, res) => {
   }
 };
 
+// ============================================================
+// UPDATE BLOCKED SLOT
+// ============================================================
+
+const updateBlockedSlot = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const {
+            date,
+            startTime = "",
+            endTime = "",
+            reason,
+            note = "",
+        } = req.body;
+
+        // --------------------------------------------------
+        // VALIDATE DATE
+        // --------------------------------------------------
+
+        if (!date || !String(date).trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Please select a date.",
+            });
+        }
+
+        // --------------------------------------------------
+        // VALIDATE REASON
+        // --------------------------------------------------
+
+        if (!reason || !String(reason).trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Reason is required.",
+            });
+        }
+
+        // --------------------------------------------------
+        // VALIDATE START / END TIME
+        // --------------------------------------------------
+
+        if (startTime && !endTime) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "End time is required when start time is selected.",
+            });
+        }
+
+        if (!startTime && endTime) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Start time is required when end time is selected.",
+            });
+        }
+
+        // --------------------------------------------------
+        // VALIDATE TIME RANGE
+        // --------------------------------------------------
+
+        if (startTime && endTime) {
+            const startMinutes = timeToMinutes(startTime);
+            const endMinutes = timeToMinutes(endTime);
+
+            if (
+                Number.isNaN(startMinutes) ||
+                Number.isNaN(endMinutes)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid start or end time.",
+                });
+            }
+
+            if (endMinutes <= startMinutes) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "End time must be later than start time.",
+                });
+            }
+        }
+
+        // --------------------------------------------------
+        // FIND EXISTING BLOCKED SLOT
+        // --------------------------------------------------
+
+        const blockedSlot = await BlockedSlot.findById(id);
+
+        if (!blockedSlot) {
+            return res.status(404).json({
+                success: false,
+                message: "Blocked slot not found.",
+            });
+        }
+
+        // --------------------------------------------------
+        // CHECK DUPLICATE BLOCK
+        // --------------------------------------------------
+
+        const duplicateSlot = await BlockedSlot.findOne({
+            _id: { $ne: id },
+            date: String(date).trim(),
+            startTime: String(startTime).trim(),
+            endTime: String(endTime).trim(),
+        });
+
+        if (duplicateSlot) {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "A blocked slot already exists for this date and time.",
+            });
+        }
+
+        // --------------------------------------------------
+        // UPDATE BLOCKED SLOT
+        // --------------------------------------------------
+
+        blockedSlot.date = String(date).trim();
+        blockedSlot.startTime = String(startTime).trim();
+        blockedSlot.endTime = String(endTime).trim();
+        blockedSlot.reason = String(reason).trim();
+        blockedSlot.note = String(note).trim();
+
+        await blockedSlot.save();
+
+        // --------------------------------------------------
+        // RESPONSE
+        // --------------------------------------------------
+
+        return res.status(200).json({
+            success: true,
+            message: "Scanner slot updated successfully.",
+            data: blockedSlot,
+        });
+
+    } catch (error) {
+        console.error("Update blocked slot error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to update blocked slot.",
+            error: error.message,
+        });
+    }
+};
+
 
 // ============================================================
 // DELETE BLOCKED SLOT
@@ -834,5 +984,6 @@ module.exports = {
 
     getBlockedSlots,
     createBlockedSlot,
+    updateBlockedSlot,
     deleteBlockedSlot,
 };

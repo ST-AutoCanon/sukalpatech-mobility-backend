@@ -69,7 +69,7 @@ const sendScannerApprovalEmail = async ({
     const mailOptions = {
         from: `"Sukalpa Mobility Services" <${process.env.SMTP_USER}>`,
         to,
-        subject: "Scanner Booking Approved",
+        subject: "Scanner Booking Approved-Sukalpa Mobility",
 
         text: `
 Hello ${name},
@@ -102,7 +102,7 @@ Sukalpa Mobility Services
                 "
             >
                 <h2 style="color: #0A2D63;">
-                    Scanner Booking Approved
+                    Scanner Booking Approved-Sukalpa Mobility
                 </h2>
 
                 <p>
@@ -265,7 +265,7 @@ const sendScannerRejectionEmail = async ({
     const mailOptions = {
         from: `"Sukalpa Mobility Services" <${process.env.SMTP_USER}>`,
         to,
-        subject: "Scanner Booking Request Rejected",
+        subject: "Scanner Booking Request Rejected-Sukalpa Mobility",
 
         text: `
 Dear ${name},
@@ -298,7 +298,7 @@ Sukalpa Mobility Services
                 "
             >
                 <h2 style="color: #0A2D63;">
-                    Scanner Booking Request Rejected
+                    Scanner Booking Request Rejected-Sukalpa Mobility
                 </h2>
 
                 <p>
@@ -510,7 +510,7 @@ Sukalpa Mobility Services
                 "
             >
                 <h2 style="color: #0A2D63;">
-                    New Scanner Booking Request
+                    New Scanner Booking Request-Sukalpa Mobility
                 </h2>
 
                 <p>
